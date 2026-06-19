@@ -1,8 +1,12 @@
-[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-718a45dd9cf7e7f842a935f5ebbe5719a5e09af4491e668f4dbf3b35d5cca122.svg)](https://classroom.github.com/online_ide?assignment_repo_id=12640548&assignment_repo_type=AssignmentRepo)
+## REVISION ##
+- This will be an improved version of my search engine group project which will have its own frontend with Qt and improved functions with greater functionality
+- I have not touched this since my sophomore year of college and I am looking at this to review C++ and to become a better SWE by reading and improving upon my code
+- Better and updated documentation will be included as well
+- Originally from SMU DSA class
+
 # Assignment 4: Search Engine 
 
 This is a longer group project! Here are the [Project Instructions](Project_Instructions.pdf).
-
 
 **Objectives:**
 
@@ -10,7 +14,6 @@ This is a longer group project! Here are the [Project Instructions](Project_Inst
 * Design a larger system, plan the implementation and submit multiple deliverables.
 * Implement a search tree-based map.
 * Implement a persistent data structure.
-
 
 ## Timeline 
 
@@ -39,7 +42,6 @@ from the large dataset into a test folder.
 
 Complete the file `answers.md` to describe your design, data structures, etc.
 
-
 ## Software
 
 Your executable needs to be called `supersearch` and have the following command line interface.
@@ -67,7 +69,6 @@ Usage:
   ```
 
 For the UI, you can display a simple menu like `Press i for creating a new index`, etc.
-
 
 ### Automatic Tests and Memory Tests
 You need to describe test cases for:
@@ -110,22 +111,3 @@ time ./supersearch query <our test queries>
 
 ./supersearch ui
 ```
-
-Make sure that you test that this procedure works with the provided sample data.
-
-
-## Grading Rubric
-
-| Task                        | Points Possible | Points Awarded |
-| :------------------         | --------------: | -------------: |
-| UML diagram/design          | 10              |                |
-| AVL tree map + tests        | 20              |                |
-| AVL tree persistence + tests| 10              |                |
-| Document parser / indexer   | 10              |                |
-| Query processor + interface | 20              |                |
-| Proper Memory Management    | 5               |                |
-| Formatting, Comments, etc.  | 5               |                |
-| Documentation               | 20              |                |
-| Bonus Work                  | up to +10       |                |
-| 48hr early submission bonus | +5              |                |
-
