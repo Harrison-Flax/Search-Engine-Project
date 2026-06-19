@@ -1,0 +1,47 @@
+Due: Mon Nov 13, 2023 6:00am
+
+Submit the following information (copy and paste this into the answer box and complete it with your information):
+
+ 
+
+1. URL to my GitHub project:  https://github.com/SMUCS2341/assignment-4-search-engine-royal-giants
+
+2. Name of the file(s) that implements my AVL tree-based map: ___AVLTree.h___
+
+3. Name of the file(s) that contains your tests: _AVL_Tree_Test.cpp__
+
+4. Copy & paste the results of running the tests below:
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 1 | 1 passed | 0 failed | 0 skipped
+[doctest] assertions: 1 | 1 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+
+5. Copy & paste the result of running the tests with Valgrind below:
+==44266== HEAP SUMMARY:
+==44266==     in use at exit: 26,199 bytes in 640 blocks
+==44266==   total heap usage: 792 allocs, 152 frees, 42,858 bytes allocated
+==44266== 
+==44266== 26 (16 direct, 10 indirect) bytes in 1 blocks are definitely lost in loss record 125 of 255
+==44266==    at 0x4C29F73: malloc (vg_replace_malloc.c:309)
+==44266==    by 0x46A87A: xmalloc (in /usr/bin/bash)
+==44266==    by 0x424404: ??? (in /usr/bin/bash)
+==44266==    by 0x426498: yyparse (in /usr/bin/bash)
+==44266==    by 0x41E039: parse_command (in /usr/bin/bash)
+==44266==    by 0x41E0FB: read_command (in /usr/bin/bash)
+==44266==    by 0x41E2FB: reader_loop (in /usr/bin/bash)
+==44266==    by 0x41C9DD: main (in /usr/bin/bash)
+==44266== 
+==44266== LEAK SUMMARY:
+==44266==    definitely lost: 16 bytes in 1 blocks
+==44266==    indirectly lost: 10 bytes in 1 blocks
+==44266==      possibly lost: 0 bytes in 0 blocks
+==44266==    still reachable: 26,173 bytes in 638 blocks
+==44266==         suppressed: 0 bytes in 0 blocks
+==44266== Reachable blocks (those to which a pointer was found) are not shown.
+==44266== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==44266== 
+==44266== For lists of detected and suppressed errors, rerun with: -s
+==44266== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
