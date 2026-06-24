@@ -1,6 +1,5 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "SearchEngine.h"
-#include "SearchEngine.cpp"
 #include "AVLOrganizer.h"
 #include "doctest.h"
 

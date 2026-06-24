@@ -4,18 +4,22 @@ project(FinalProjExamples)
 # filesystem.h require C++17
 set(CMAKE_CXX_STANDARD 17)
 
-file(COPY sample_data/ DESTINATION sample_data/)
+file(COPY build/sample_data/ DESTINATION sample_data/)
 
 # Show compiler output and enable warnings
 set(CMAKE_VERBOSE_MAKEFILE ON)
 add_compile_options(-Wall -Wextra -pedantic)
 
-add_executable(rapidJSONExample rapidJSONExample.cpp)
-add_executable(supersearch main.cpp)
-add_executable(AVL_Tree_Test AVL_Tree_Test.cpp)
+add_executable(rapidJSONExample docs/rapidJSONExample.cpp)
+add_executable(supersearch src/main.cpp src/SearchEngine.cpp)
+add_executable(AVL_Tree_Test tests/AVL_Tree_Test.cpp)
+add_executable(Parser_Test tests/Parser_Test.cpp src/SearchEngine.cpp)
 
 # This makes sure we also link rapidjson
-target_include_directories(rapidJSONExample PRIVATE rapidjson/)
+target_include_directories(supersearch PRIVATE include/ include/rapidjson/)
+target_include_directories(rapidJSONExample PRIVATE include/rapidjson/)
+target_include_directories(AVL_Tree_Test PRIVATE include/)
+target_include_directories(Parser_Test PRIVATE include/ include/rapidjson/)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
