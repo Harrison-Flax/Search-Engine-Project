@@ -1,40 +1,67 @@
-#pragma once
+#ifndef AVL_TREE_ORGANIZER_H
+#define AVL_TREE_ORGANIZER_H
 
 #include "AVLTree.h"
 #include <string>
+#include <set>
 #include <list>
 
-template<typename Comparable>
+struct OrganizerEntry {
+    std::string term;
+    std::set<int> documentIds;
+
+    OrganizerEntry(const std::string& t, const std::set<int>& ids)
+        : term(t), documentIds(ids) {}
+    
+    OrganizerEntry(const std::string& t, int id)
+        : term(t), documentIds({id}) {}
+
+    void addDocumentID(int id) {
+        documentIds.insert(id);
+    }
+
+    bool operator<(const OrganizerEntry& other) const {
+        return term < other.term;
+    }
+
+    bool operator>(const OrganizerEntry& other) const {
+        return term > other.term;
+    }
+
+    bool operator==(const OrganizerEntry& other) const {
+        return term == other.term;
+    }
+};
+
 class AVLTreeOrganizer : public AVLTree<OrganizerEntry> {
 public:
     AVLTreeOrganizer() : AVLTree<OrganizerEntry>() {}
     ~AVLTreeOrganizer() {}
 
+    // Insert document ID
     void insert(const std::string& key, int document) {
-        AVLNode* node = this->findNode(this->root, OrganizerEntry(key, {})); 
+        AvlNode* node = this->findNode(this->root, OrganizerEntry(key, 0)); 
 
         if (node != nullptr) {
             // Key found, add document to the existing list
-            node->element.documentIds.push_back(document);
+            node->element.addDocumentID(document);
         } else {
             // Key not found, create a new entry and insert
-            OrganizerEntry newEntry(key, {document});
-            AVLTree<OrganizerEntry>::insert(newEntry);
+            AVLTree<OrganizerEntry>::insert(OrganizerEntry(key, document));
         }
     }
 
+    // Return all document IDs with organization
     std::list<int> search(const std::string& key) {
-        AVLNode* node = this->findNode(this->root, OrganizerEntry(key, {}));
+        AvlNode* node = this->findNode(this->root, OrganizerEntry(key, 0));
 
         if (node != nullptr) {
-            // Key found, return the list of documents
-            return node->element.documentIds;
-        } else {
-            // Key not found, return an empty list
-            return std::list<int>();
+            return std::list<int>(node->element.documentIds.begin(),
+                                  node->element.documentIds.end());
         }
+        return std::list<int>();
     }
-
-private:
-    // None rn
 };
+
+#endif
+                                
