@@ -5,7 +5,7 @@
 
 //Using doctest
 DOCTEST_TEST_CASE("AVL Tree Balance Check") { //doctest only takes one parameter for test case
-    AvlTree<int> tree;
+    AVLTree<int> tree;
     tree.insert(10);
     tree.insert(20);
     tree.insert(5);
@@ -15,7 +15,7 @@ DOCTEST_TEST_CASE("AVL Tree Balance Check") { //doctest only takes one parameter
 }
 
 DOCTEST_TEST_CASE("Insertion and Balance Check") {
-    AvlTree<int> tree;
+    AVLTree<int> tree;
     tree.insert(3);
     tree.insert(2);
     tree.insert(1); // Should cause a rotation
@@ -25,7 +25,7 @@ DOCTEST_TEST_CASE("Insertion and Balance Check") {
 }
 
 DOCTEST_TEST_CASE("Removal and Balance Check") {
-    AvlTree<int> tree;
+    AVLTree<int> tree;
     tree.insert(10);
     tree.insert(20);
     tree.insert(30);
@@ -34,7 +34,7 @@ DOCTEST_TEST_CASE("Removal and Balance Check") {
 }
 
 DOCTEST_TEST_CASE("Containment of Elements") {
-    AvlTree<int> tree;
+    AVLTree<int> tree;
     tree.insert(10);
     tree.insert(20);
     tree.insert(30);
@@ -43,15 +43,15 @@ DOCTEST_TEST_CASE("Containment of Elements") {
 }
 
 DOCTEST_TEST_CASE("Copy Constructor") { 
-    AvlTree<int> tree1;
+    AVLTree<int> tree1;
     tree1.insert(10);
     tree1.insert(20);
-    AvlTree<int> tree2 = tree1;
+    AVLTree<int> tree2 = tree1;
     REQUIRE_NOTHROW(tree2.checkBalance());
 }
 
 DOCTEST_TEST_CASE("Deletion") {
-    AvlTree<int> tree;
+    AVLTree<int> tree;
     tree.insert(10);
     tree.insert(20);
     tree.insert(30);
@@ -60,18 +60,18 @@ DOCTEST_TEST_CASE("Deletion") {
 }
 
 DOCTEST_TEST_CASE("Empty Tree") {
-    AvlTree<int> tree;
+    AVLTree<int> tree;
     REQUIRE(tree.isEmpty() == true);
 }
 
 DOCTEST_TEST_CASE("Non-Empty Tree") {
-    AvlTree<int> tree;
+    AVLTree<int> tree;
     tree.insert(1);
     REQUIRE(tree.isEmpty() == false);
 }
 
 DOCTEST_TEST_CASE("Print Tree") {
-    AvlTree<int> tree;
+    AVLTree<int> tree;
     tree.insert(15);
     tree.insert(10);
     tree.insert(45);
@@ -90,7 +90,7 @@ DOCTEST_TEST_CASE("Print Tree") {
 }
 
 DOCTEST_TEST_CASE("Contains") {
-    AvlTree<int> tree;
+    AVLTree<int> tree;
     tree.insert(15);
     tree.insert(10);
     tree.insert(45);
@@ -101,7 +101,7 @@ DOCTEST_TEST_CASE("Contains") {
 }
 
 DOCTEST_TEST_CASE("Find Min") {
-    AvlTree<int> tree;
+    AVLTree<int> tree;
     tree.insert(15);
     tree.insert(10);
     tree.insert(45);
@@ -109,7 +109,7 @@ DOCTEST_TEST_CASE("Find Min") {
     tree.insert(8);
 
     //Find the minimum in the tree
-    AvlTree<int>::AvlNode* min = tree.findMin(tree.root);
+    AVLTree<int>::AvlNode* min = tree.findMin(tree.root);
 
     //Use REQUIRE to check if the minimum is correct
     REQUIRE(min != nullptr); //min should not be null
@@ -117,7 +117,7 @@ DOCTEST_TEST_CASE("Find Min") {
 }
 
 DOCTEST_TEST_CASE("Left Rotation") {
-        AvlTree<int> tree;
+        AVLTree<int> tree;
         tree.insert(15);
         tree.insert(10);
         tree.insert(45);
@@ -131,7 +131,7 @@ DOCTEST_TEST_CASE("Left Rotation") {
 }
 
 DOCTEST_TEST_CASE("Right Rotation") {
-        AvlTree<int> tree;
+        AVLTree<int> tree;
         tree.insert(15);
         tree.insert(10);
         tree.insert(45);
@@ -145,7 +145,7 @@ DOCTEST_TEST_CASE("Right Rotation") {
 }
 
 DOCTEST_TEST_CASE("Double Left-Right Rotation") {
-        AvlTree<int> tree;
+        AVLTree<int> tree;
         tree.insert(15);
         tree.insert(10);
         tree.insert(45);
@@ -157,7 +157,7 @@ DOCTEST_TEST_CASE("Double Left-Right Rotation") {
 }
 
 DOCTEST_TEST_CASE("Double Right-Left Rotation Test") {
-        AvlTree<int> tree;
+        AVLTree<int> tree;
         tree.insert(15);
         tree.insert(10);
         tree.insert(45);
@@ -169,7 +169,7 @@ DOCTEST_TEST_CASE("Double Right-Left Rotation Test") {
 }
 
 DOCTEST_TEST_CASE("Make Empty") {
-    AvlTree<int> tree;
+    AVLTree<int> tree;
     tree.insert(15);
     tree.insert(10);
     tree.insert(45);
@@ -178,8 +178,8 @@ DOCTEST_TEST_CASE("Make Empty") {
 }
 
 DOCTEST_TEST_CASE("Clone") {
-    AvlTree<int> tree;
-    AvlTree<int>::AvlNode* clonedTree;
+    AVLTree<int> tree;
+    AVLTree<int>::AvlNode* clonedTree;
     tree.insert(15);
     tree.insert(10);
     tree.insert(45);
