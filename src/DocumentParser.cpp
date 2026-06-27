@@ -5,6 +5,8 @@
 #include <string>
 #include <iomanip>
 #include <unordered_set>
+#include <algorithm>
+#include <cctype>
 
 // RapidJSON headers we need for our parsing.
 #include "rapidjson/istreamwrapper.h"
@@ -56,7 +58,7 @@ SearchResult DocumentParser::parseDocument(const std::string& filePath, int docu
         std::string sentiment = person["sentiment"].GetString();
 
         // Insert into organizerIndex
-        organizerIndex->insert(personName, documentId);
+        organizerIndex->insert(personName, documentId, "person");
     }
 
     // Tokens loop for body text
@@ -65,12 +67,21 @@ SearchResult DocumentParser::parseDocument(const std::string& filePath, int docu
     std::string token;
 
     while (textStream >> token) {
+        // Need to clean the tokens of punctuation and make them lowercase
+        token.erase(std::remove_if(token.begin(), token.end(), ::ispunct), token.end());
+        std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+
+        // Inlcuding a check for empty quotes
+        if (token.empty()) {
+            continue;
+        }
+
         // Check if the token is a stop word
         if (!isStopWord(token)) {
             // Stem the token
             std::string stemmedToken = stemWord(token);
             // Insert the stemmed token into organizerIndex
-            organizerIndex->insert(stemmedToken, documentId);
+            organizerIndex->insert(stemmedToken, documentId, "word");
         }
     }
 
@@ -80,7 +91,7 @@ SearchResult DocumentParser::parseDocument(const std::string& filePath, int docu
         std::string sentiment = org["sentiment"].GetString();
 
         // Insert into organizerIndex
-        organizerIndex->insert(orgName, documentId);
+        organizerIndex->insert(orgName, documentId, "org");
     }
 
     // Close the input file
@@ -96,7 +107,7 @@ bool DocumentParser::isStopWord(const std::string& word) {
 
     if (stopWords.empty()) {
         // Open the .csv file since it's better than hardcoding
-        std::ifstream stopWordsFile("assets/stopwords.csv");
+        std::ifstream stopWordsFile("assets/stopwords/stopwords.csv");
         
         // Check if the file opened
         if (!stopWordsFile.is_open()) {
@@ -118,6 +129,12 @@ bool DocumentParser::isStopWord(const std::string& word) {
             // Split the row by commas
             while(std::getline(ss, cell, ',')) {
                 row.push_back(cell);
+            }
+
+            // Remove the quotes and whitespace from the cells
+            for (auto& word : row) {
+                word.erase(std::remove(word.begin(), word.end(), '\"'), word.end());
+                word.erase(std::remove_if(word.begin(), word.end(), ::isspace), word.end());
             }
 
             // Add the cells to the unordered set
