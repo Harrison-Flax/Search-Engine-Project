@@ -46,7 +46,8 @@ SearchResult DocumentParser::parseDocument(const std::string& filePath, int docu
     auto text = d["text"].GetString();
     auto persons = d["entities"]["persons"].GetArray();
     auto orgs = d["entities"]["organizations"].GetArray();
-    auto score = d["score"].GetDouble();
+    // There is no score so might change to rank or performance_score
+    auto score = 0.0;
 
     // Create a SearchResult object with the extracted fields (only those from the .h)
     SearchResult result(uuid, title, publication, date, score, text);
