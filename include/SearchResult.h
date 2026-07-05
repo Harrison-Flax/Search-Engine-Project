@@ -45,6 +45,15 @@ struct SearchResult {
     bool operator==(const SearchResult& other) const {
         return this->uuid == other.uuid; 
     }
+
+    // Getters for the attributes
+    std::string getUuid() const { return uuid; }
+    std::string getTitle() const { return title; }
+    std::string getPublication() const { return publication; }
+    std::string getDate() const { return date; }
+    double getScore() const { return score; }
+    std::string getText() const { return text; }
+
 };
 
 #endif

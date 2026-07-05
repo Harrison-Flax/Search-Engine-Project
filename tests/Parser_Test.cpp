@@ -36,10 +36,22 @@ DOCTEST_TEST_CASE("SearchEngine Index Tests") {
     }
 
     SUBCASE("Perform Query") {
-        std::string testDirectory = "sample_data/coll_2"; 
+        std::string testDirectory = "sample_data/coll_2";         
 
         // Assuming the index is already created (assumption is that createIndex has been tested)
         REQUIRE_NOTHROW(searchEngine.createIndex(testDirectory));
+
+        // Creating SearchResult objects to simulate expected results
+        SearchResult result1("uuid1", "Title 1", "Publication 1", "2023-01-01", 0.9, "Sample text 1");
+        SearchResult result2("uuid2", "Title 2", "Publication 2", "2023-02-01", 0.8, "Sample text 2");
+
+        // Add to articleInfo map
+        searchEngine.getArticleInfo().insert({"1", result1});
+        searchEngine.getArticleInfo().insert({"2", result2});
+
+        // Add IDs to AVLTree for the tokens
+        searchEngine.getOrganizerIndex()->insert("sample_query", 1);
+        searchEngine.getOrganizerIndex()->insert("sample_query", 2);
 
         // Test performing a query
         auto queryResult = searchEngine.performQuery("sample_query");
