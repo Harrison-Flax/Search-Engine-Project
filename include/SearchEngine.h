@@ -28,8 +28,8 @@ public:
     
     // Query Operations
     std::list<SearchResult> performQuery(const std::string& query);
-    void compareResults(const std::vector<SearchResult>& results, const std::vector<SearchResult>& otherResults);
-    void searchToken(const std::vector<std::string>& names, const std::string& token, const bool excluded);
+    std::vector<SearchResult> compareResults(std::vector<SearchResult> listA, std::vector<SearchResult> listB, const std::string& operationType);
+    std::vector<SearchResult> searchToken(const std::string& token, const std::string& prefixType, const bool isExcluded);
 
     // Getters
     std::unordered_map<std::string, SearchResult> getArticleInfo() const;

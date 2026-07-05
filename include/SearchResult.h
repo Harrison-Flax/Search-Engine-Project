@@ -36,6 +36,15 @@ struct SearchResult {
            << "UUID: " << result.uuid << "\n";
         return os;
     }
+
+    // Operator overloads
+    bool operator<(const SearchResult& other) const {
+        return this->uuid < other.uuid; 
+    }
+
+    bool operator==(const SearchResult& other) const {
+        return this->uuid == other.uuid; 
+    }
 };
 
 #endif

@@ -20,7 +20,7 @@ struct PersonEntry {
     PersonEntry(const std::string& t, int id)
         : term(t), documentIds({id}) {}
     
-    void addDocument(int id) {
+    void addDocumentID(int id) {
         documentIds.insert(id);
     }
 

@@ -126,90 +126,184 @@ std::list<SearchResult> SearchEngine::performQuery(const std::string& query) {
     std::vector<std::string> tokens = {std::istream_iterator<std::string>{iss},
                                         std::istream_iterator<std::string>{}};
 
-    // List to store the final results                                      
-    std::list<SearchResult> results;
-
-    // Used to store the results of the query
-    // Using unordered set since its fast and no need for order
-    std::unordered_set<std::string> resultSet; 
-
-    // For performing intersection of results when AND is used
-    std::list<SearchResult> intersection;
-
+    // Vector to store the final results                                      
+    std::vector<SearchResult> finalResults;
     // Used to determine if the next operation is an AND or OR
     bool performAND = false; 
 
     // Process the tokens and construct the query
     for (const auto& token : tokens) {
 
-        // FIX: Detect person and org prefixes
+        // Detect person and org prefixes
+        // Need two variables to hold if excluded and the type of prefix
+        bool isExcluded = false;
+        std::string prefixType = "NONE";
+        // Mutable copy of token
+        std::string cleanToken = token;
 
-
-        // FIX: Call searchToken for person and org tokens
-
-        
-        // Check if AND/OR and no infinite loop
-        if (token == "AND" && performAND) {
-            std::cerr << "Error: Consecutive AND operators are not allowed." << std::endl;
-            return {};
-        } else if (token == "OR" && !performAND) {
-            std::cerr << "Error: Consecutive OR operators are not allowed." << std::endl;
-            return {};
+        // Logic operators
+        if (cleanToken == "AND") {
+            performAND = true;
+            continue;
+        } else if (cleanToken == "OR") {
+            performAND = false;
+            continue;
         }
 
-        // Determine the operation based on the token
-        if (token == "AND") {
-            performAND = true;
-        } else if (token == "OR") {
-            performAND = false;
+        // Exclusion
+        if (cleanToken.front() == '-') {
+            isExcluded = true;
+            // Removes first character
+            cleanToken = cleanToken.substr(1);
+        }
+
+        // Prefixes
+        if (cleanToken.find("PERSON:") == 0) {
+            prefixType = "PERSON";
+            // Removes PERSON:
+            cleanToken = cleanToken.substr(7);
+        } else if (cleanToken.find("ORG:") == 0) {
+            prefixType = "ORG";
+            // Removes ORG:
+            cleanToken = cleanToken.substr(4);
+        }
+
+        // Call searchToken for person and org tokens instead of the regular search
+        std::vector<SearchResult> tokenResults = this->searchToken(cleanToken, prefixType, isExcluded);
+        
+        // Merge the results into a final list
+        if (finalResults.empty()) {
+            // tokenResults is the base case for the first token
+            finalResults = tokenResults;
         } else {
-            // Perform a basic search for the token
-            std::list<SearchResult> tokenResults = this->performQuery(token);
-
-            if (performAND) {
-                // If previous operation was an AND, perform intersection
-                // Using a multimap to store the results with their scores for sorting and greater efficiency
-                std::multimap<int, SearchResult> tokenSet(tokenResults.begin(), tokenResults.end());
-                std::set_intersection(resultSet.begin(), resultSet.end(),
-                                      tokenSet.begin(), tokenSet.end(),
-                                      std::back_inserter(intersection));
-
-                // Need to call compareResults to sort and filter the intersection results based on scores
-                compareResults(std::vector<SearchResult>(intersection.begin(), intersection.end()),
-                               std::vector<SearchResult>(tokenResults.begin(), tokenResults.end()));
-            } else {
-                // If previous operation was an OR, perform union
-                resultSet.insert(tokenResults.begin(), tokenResults.end());
-            }
-
-            // Incorporate the results into the overall results
-            results.insert(results.end(), tokenResults.begin(), tokenResults.end());
+            std::string operationType = performAND ? "AND" : "OR";
+            finalResults = compareResults(finalResults, tokenResults, operationType);
         }
     }
 
-    // Remove duplicate results (if needed)
-    results.sort();
-    results.unique();
-
-    // Copy the results from the set to the list
-    results.assign(resultSet.begin(), resultSet.end());
     std::cout << "Query performed successfully." << std::endl;
 
-    return results;
+    // The vector becomes a list for the method header to match
+    return std::list<SearchResult>(finalResults.begin(), finalResults.end());
 }
 
 // Need the rest of the query functions
-void SearchEngine::compareResults(const std::vector<SearchResult>& results, const std::vector<SearchResult>& otherResults) {
+std::vector<SearchResult> SearchEngine::compareResults(std::vector<SearchResult> listA, std::vector<SearchResult> listB, const std::string& operationType) {
     // Handles AND intersection and OR union
+
+    // Need to sort the lists by lowest to highest ID
+    std::sort(listA.begin(), listA.end());
+    std::sort(listB.begin(), listB.end());
+
+    // Holding the merged results
+    std::vector<SearchResult> mergedResults;
+
+    // Merging the two pointers so there are no lost exclusions or scores
+    auto iteratorA = listA.begin();
+    auto iteratorB = listB.begin();
+
+    while (iteratorA != listA.end() && iteratorB != listB.end()) {
+        if (*iteratorA < *iteratorB) {
+            if (operationType == "OR") {
+                mergedResults.push_back(*iteratorA);
+            }
+            // A is moved forward
+            ++iteratorA;
+        } else if (*iteratorB < *iteratorA) {
+            if (operationType == "OR") {
+                mergedResults.push_back(*iteratorB);
+            }
+            // B is moved forward
+            ++iteratorB;
+        } else {
+            // Both are equal, so we can merge them
+            // A copy of A is created
+            SearchResult mergedResult = *iteratorA; 
+
+            // Add exclusion check
+            if (iteratorA->score < 0 || iteratorB->score < 0) {
+                mergedResult.score = -1;
+            } else {
+                // Sum the scores if both are not excluded
+                mergedResult.score += iteratorB->score;
+            }
+            
+            mergedResults.push_back(mergedResult);
+            ++iteratorA;
+            ++iteratorB;
+        }
+    }
+
+    // If on OR operation, need to catch any remaining elements in either list
+    if (operationType == "OR") {
+        while (iteratorA != listA.end()) {
+            mergedResults.push_back(*iteratorA);
+            ++iteratorA;
+        }
+        while (iteratorB != listB.end()) {
+            mergedResults.push_back(*iteratorB);
+            ++iteratorB;
+        }
+    }
+
+    // Handling exclusions
+    // Using a lambda function to do this in a single line
+    mergedResults.erase(std::remove_if(mergedResults.begin(), mergedResults.end(),
+        [](const SearchResult& result) {
+            // Negative scores are the exclusion flag
+            return result.score < 0; 
+        }), mergedResults.end());
+
+    // Sorting the list based on score 
+    std::sort(mergedResults.begin(), mergedResults.end(),
+              [](const SearchResult& a, const SearchResult& b) {
+                  // Sort in descending order
+                  return a.score > b.score; 
+              });
     
+    return mergedResults;
 }
 
-void SearchEngine::searchToken(const std::vector<std::string>& names, const std::string& token, const bool excluded) {
+std::vector<SearchResult> SearchEngine::searchToken(const std::string& token, const std::string& prefixType, const bool isExcluded) {
     // Performs the search and handle exclusions as needed
     // Tokens should looked up in organizerIndex
-    // Checks for exlcuded flags and returns matching IDs
-    organizerIndex->search(token);
+    // Checks for excluded flags and returns matching IDs
+    
+    // Storing the ids as matches from tree as a list
+    std::list<int> rawMatches = organizerIndex->search(token);
 
+    // Creating a vector to hold the data to return
+    std::vector<SearchResult> finalMatches;
+
+    // Iterating through the IDs
+    for (int id : rawMatches) {
+        // ID needs to be a string like before
+        std::string idStr = std::to_string(id);
+
+        // Check if the ID exists in articleInfo
+        if (articleInfo.find(idStr) == articleInfo.end()) {
+            continue;
+        }
+
+        SearchResult currentResult = articleInfo[idStr];
+
+        // Prefixes
+        if (prefixType == "PERSON" && currentResult.title.find("PERSON:") == std::string::npos) {
+            continue; 
+        } else if (prefixType == "ORG" && currentResult.title.find("ORG:") == std::string::npos) {
+            continue; 
+        }
+
+        // Handle exclusions
+        if (isExcluded) {
+            currentResult.score = -1;
+        }
+
+        // Pushed into vector
+        finalMatches.push_back(currentResult);
+    }
+
+    return finalMatches;
 }
 
 // Easy getters for member variables
