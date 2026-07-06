@@ -168,6 +168,18 @@ std::list<SearchResult> SearchEngine::performQuery(const std::string& query) {
             cleanToken = cleanToken.substr(4);
         }
 
+        // Handling stop words
+        // Call on functions from DocumentParser
+        DocumentParser parser;
+
+        if (parser.isStopWord(cleanToken)) {
+            std::cout << "Skipping stop word: " << cleanToken << std::endl;
+            continue;
+        } else {
+            // Pass through Oleander stemmer
+            cleanToken = parser.stemWord(cleanToken);
+        }
+
         // Call searchToken for person and org tokens instead of the regular search
         std::vector<SearchResult> tokenResults = this->searchToken(cleanToken, prefixType, isExcluded);
         
