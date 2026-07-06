@@ -1,12 +1,12 @@
-#include "AVLOrganizer.h"   
-#include "SearchEngine.h"
+#include "../include/AVLOrganizer.h"   
+#include "../include/SearchEngine.h"
 #include <iostream>
 #include <string>
 #include <list>
 #include <filesystem>
-#include "rapidjson/istreamwrapper.h"
-#include "rapidjson/document.h"
-#include "DocumentParser.h"
+#include "../include/rapidjson/istreamwrapper.h"
+#include "../include/rapidjson/document.h"
+#include "../include/DocumentParser.h"
 #include <sstream>
 #include <fstream>
 #include <iterator>

@@ -1,6 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "AVLTree.h"
-#include "doctest.h"
+#include "../include/AVLTree.h"
+#include "../include/doctest.h"
 #include <list>
 
 // Using doctest
@@ -119,54 +119,58 @@ DOCTEST_TEST_CASE("Find Min") {
 
 DOCTEST_TEST_CASE("Left Rotation") {
         AVLTree<int> tree;
-        tree.insert(15);
+        // Activates a left rotation scenario
         tree.insert(10);
-        tree.insert(45);
-        tree.insert(1);
-        tree.insert(8);
-        tree.rotateWithLeftChild(tree.root);
-        // Verify specific node placements, balance, and heights
-        REQUIRE(tree.root->element == 8); // After left rotation, 8 becomes the new root
-        REQUIRE(tree.root->left->element == 1); // 1 should be the left child of the new root
-        REQUIRE(tree.root->right->element == 15); // 15 should be the right child of the new root
+        tree.insert(20);
+        tree.insert(30);
+        REQUIRE(tree.root != nullptr);
+        REQUIRE(tree.root->element == 20);
+        REQUIRE(tree.root->left != nullptr);
+        REQUIRE(tree.root->left->element == 10);
+        REQUIRE(tree.root->right != nullptr);
+        REQUIRE(tree.root->right->element == 30);
 }
 
 DOCTEST_TEST_CASE("Right Rotation") {
         AVLTree<int> tree;
-        tree.insert(15);
+        // Activates a right rotation scenario
+        tree.insert(30);
+        tree.insert(20);
         tree.insert(10);
-        tree.insert(45);
-        tree.insert(1);
-        tree.insert(8);
-        tree.rotateWithRightChild(tree.root);
-        // Verify specific node placements, balance, and heights
-        REQUIRE(tree.root->element == 45); // After right rotation, 45 becomes the new root
-        REQUIRE(tree.root->left->element == 15); // 15 should be the left child of the new root
-        REQUIRE(tree.root->right->element == 45); // 45 should be the right child of the new root
+        REQUIRE(tree.root != nullptr);
+        REQUIRE(tree.root->element == 20);
+        REQUIRE(tree.root->left != nullptr);
+        REQUIRE(tree.root->left->element == 10);
+        REQUIRE(tree.root->right != nullptr);
+        REQUIRE(tree.root->right->element == 30);
 }
 
 DOCTEST_TEST_CASE("Double Left-Right Rotation") {
         AVLTree<int> tree;
-        tree.insert(15);
+        // Activates a double left-right rotation scenario
+        tree.insert(20);
         tree.insert(10);
-        tree.insert(45);
-        tree.insert(1);
-        tree.insert(8);
-        tree.doubleWithLeftChild(tree.root);
-        // Verify specific node placements, balance, and heights
-        REQUIRE(tree.root->element == 10); // After double left-right rotation, 10 becomes the new root
+        tree.insert(15);
+        REQUIRE(tree.root != nullptr);
+        REQUIRE(tree.root->element == 15);
+        REQUIRE(tree.root->left != nullptr);
+        REQUIRE(tree.root->left->element == 10);
+        REQUIRE(tree.root->right != nullptr);
+        REQUIRE(tree.root->right->element == 20);
 }
 
 DOCTEST_TEST_CASE("Double Right-Left Rotation Test") {
         AVLTree<int> tree;
-        tree.insert(15);
+        // Activates a double right-left rotation scenario
         tree.insert(10);
-        tree.insert(45);
-        tree.insert(1);
-        tree.insert(8);
-        tree.doubleWithRightChild(tree.root);
-        // Verify specific node placements, balance, and heights
-        REQUIRE(tree.root->element == 15); // After double right-left rotation, 15 becomes the new root
+        tree.insert(20);
+        tree.insert(15);
+        REQUIRE(tree.root != nullptr);
+        REQUIRE(tree.root->element == 15);
+        REQUIRE(tree.root->left != nullptr);
+        REQUIRE(tree.root->left->element == 10);
+        REQUIRE(tree.root->right != nullptr);
+        REQUIRE(tree.root->right->element == 20);
 }
 
 DOCTEST_TEST_CASE("Make Empty") {
@@ -207,9 +211,12 @@ DOCTEST_TEST_CASE("AVL Tree Internal Functions") {
 
     // Test height
     int height = tree.height(tree.root);
-    REQUIRE(height >= 0); 
+    // After 3 nodes the height should be 1
+    REQUIRE(height == 1); 
 
     // Test check_balance
-    int balance = tree.check_balance(tree.root);
-    REQUIRE(balance >= -1 && balance <= 1); 
+    REQUIRE_NOTHROW(tree.check_balance(tree.root));
+
+    // Return the correct height as well
+    REQUIRE(tree.check_balance(tree.root) == 1);
 }

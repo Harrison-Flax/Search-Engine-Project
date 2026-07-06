@@ -98,7 +98,7 @@ public:
     }
 
     int checkBalance() const {
-        return checkBalance(root);
+        return check_balance(root);
     }
 
     AvlNode* root;
@@ -216,7 +216,7 @@ public:
 
     void printTree(AvlNode* t, const std::string& indent = "") const {
         if (t != nullptr) {
-            std::cout << indent << t->value << std::endl;
+            std::cout << indent << t->element << std::endl;
             printTree(t->left, indent + "  ");
             printTree(t->right, indent + "  ");
         }
@@ -243,7 +243,7 @@ public:
         return t == nullptr ? -1 : t->height;
     }
 
-    int check_balance(AvlNode *node)
+    int check_balance(AvlNode *node) const
     {
         if (node == nullptr)
         {
@@ -256,14 +256,14 @@ public:
 
         if (std::abs(lHeight - rHeight) > ALLOWED_IMBALANCE)
         {
-            throw std::runtime_error("tree is not balanced in node with key " + std::to_string(node->key) + ".");
+            throw std::runtime_error("tree is not balanced in node with key " + std::to_string(node->element) + ".");
         }
 
         int trueNodeHeight = std::max(lHeight, rHeight);
 
         if (trueNodeHeight != node->height)
         {
-            throw std::runtime_error("node does not have correct height value in node with key " + std::to_string(node->key) + ".");
+            throw std::runtime_error("node does not have correct height value in node with key " + std::to_string(node->element) + ".");
         }
 
         return trueNodeHeight;

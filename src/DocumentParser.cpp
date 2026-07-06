@@ -1,4 +1,4 @@
-#include "DocumentParser.h"
+#include "../include/DocumentParser.h"
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -9,12 +9,12 @@
 #include <cctype>
 
 // RapidJSON headers we need for our parsing.
-#include "rapidjson/istreamwrapper.h"
-#include "rapidjson/document.h"
+#include "../include/rapidjson/istreamwrapper.h"
+#include "../include/rapidjson/document.h"
 
 // Oleander Stemming Library
-#include "oleander/stemming.h"
-#include "oleander/english_stem.h"
+#include "../include/oleander/stemming.h"
+#include "../include/oleander/english_stem.h"
 
 DocumentParser::DocumentParser() {}
 
@@ -108,7 +108,7 @@ bool DocumentParser::isStopWord(const std::string& word) {
 
     if (stopWords.empty()) {
         // Open the .csv file since it's better than hardcoding
-        std::ifstream stopWordsFile("assets/stopwords/stopwords.csv");
+        std::ifstream stopWordsFile("../assets/stopwords/stopwords.csv");
         
         // Check if the file opened
         if (!stopWordsFile.is_open()) {

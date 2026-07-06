@@ -54,17 +54,18 @@ public:
     }
 
     // Returning all of the documnt IDs that match the name of a person
-    std::set<int> search(const std::string& key) {
+    // Needs to match the other search functions in the AVL classes
+    std::list<int> search(const std::string& key) {
         // Assuming findNode() is a method in AVLTree to find a node by key
         AvlNode* node = this->findNode(this->root, PersonEntry(key, 0));
 
         if (node != nullptr) {
             // Key found, return the set of document IDs
-            return std::set<int>(node->element.documentIds.begin(),
-                                 node->element.documentIds.end());
+            return std::list<int>(node->element.documentIds.begin(),
+                                  node->element.documentIds.end());
         }
         // Key not found, return an empty list
-        return std::set<int>();
+        return std::list<int>();
     }
 };
 

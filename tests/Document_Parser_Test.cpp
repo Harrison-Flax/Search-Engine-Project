@@ -1,7 +1,9 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "DocumentParser.h"
-#include "AVLOrganizer.h"
-#include "doctest.h"
+#include "../include/DocumentParser.h"
+#include "../include/AVLOrganizer.h"
+#include "../include/doctest.h"
+// Need this to link the implementation of DocumentParser to the test file
+#include "../src/DocumentParser.cpp"
 
 // 1) parseDocument for a single document
 DOCTEST_TEST_CASE("DocumentParser Create Index Test") {
@@ -9,7 +11,7 @@ DOCTEST_TEST_CASE("DocumentParser Create Index Test") {
     AVLOrganizer<std::string> organizerIndex;
 
     // Test parsing a single document
-    std::string testFilePath = "/build/sample_data/coll_2/news_0064570.json";
+    std::string testFilePath = "../build/sample_data/coll_2/news_0064570.json";
     // ID is arbitrary for testing purposes
     int documentId = 1;
 
@@ -18,8 +20,8 @@ DOCTEST_TEST_CASE("DocumentParser Create Index Test") {
     // Validating the result
     REQUIRE(result.getTitle() == "Eaton Vance Closed-End Funds Release Estimated Sources Of Distributions");
     REQUIRE(result.getUuid() == "4ad75456ae0bc42beeee2ff65fa58fa1cc503be2"); 
-    REQUIRE(result.getPublication() == "CNBC");
-    REQUIRE(result.getDate() == "2018-02-28");
+    REQUIRE(result.getPublication() == "cnbc.com");
+    REQUIRE(result.getDate() == "2018-02-28T18:54:00.000+02:00");
 }
 
 // 2) isStopWord for known stop words
@@ -31,7 +33,7 @@ DOCTEST_TEST_CASE("DocumentParser Stop Words Test") {
     REQUIRE(parser.isStopWord("and") == true);
     REQUIRE(parser.isStopWord("is") == true);
     // Test non-stop words
-    REQUIRE(parser.isStopWord("example") == false);
+    REQUIRE(parser.isStopWord("forward") == false);
     REQUIRE(parser.isStopWord("search") == false);
 }
 

@@ -7,8 +7,8 @@
 
 class DocumentParser {
 public:
-    DocumentParser() {}
-    ~DocumentParser() {}
+    DocumentParser();
+    ~DocumentParser();
 
     // Parsing
     SearchResult parseDocument(const std::string& filePath, int documentId, AVLOrganizer<std::string>* organizerIndex);
