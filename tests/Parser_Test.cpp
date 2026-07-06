@@ -7,15 +7,15 @@ DOCTEST_TEST_CASE("SearchEngine Index Tests") {
     SearchEngine searchEngine;
 
     SUBCASE("Create Index from Directory") {
-        std::string testDirectory = "sample_data/coll_2";
+        std::string testDirectory = "build/sample_data/coll_2";
 
         // Test creating an index from a directory
         REQUIRE_NOTHROW(searchEngine.createIndex(testDirectory));
     }
 
     SUBCASE("Save Index To File") {
-        std::string testDirectory = "sample_data/coll_2"; 
-        std::string indexPath = "temp_direct/index_file.txt"; 
+        std::string testDirectory = "build/sample_data/coll_2"; 
+        std::string indexPath = "assets/temp_direct/index_file.txt"; 
 
         // Create index first (assumption is that createIndex has been tested)
         REQUIRE_NOTHROW(searchEngine.createIndex(testDirectory));
@@ -25,7 +25,7 @@ DOCTEST_TEST_CASE("SearchEngine Index Tests") {
     }
 
     SUBCASE("Load Index From File") {
-        std::string indexPath = "temp_direct/index_file.txt";
+        std::string indexPath = "assets/temp_direct/index_file.txt";
 
         // Test loading the index from a file
         REQUIRE_NOTHROW(searchEngine.loadIndexFromFile(indexPath));
@@ -33,10 +33,18 @@ DOCTEST_TEST_CASE("SearchEngine Index Tests") {
         // Validate by performing a query after loading
         auto queryResult = searchEngine.performQuery("sample_query");
         REQUIRE_FALSE(queryResult.empty());
+
+        // Validate that the loaded index contains expected data
+        auto searchResult = searchEngine.searchToken("sample_query", "word", false);
+        REQUIRE_FALSE(searchResult.empty());
+
+        // Delete the temporary index file after testing
+        std::remove(indexPath.c_str());
+
     }
 
     SUBCASE("Perform Query") {
-        std::string testDirectory = "sample_data/coll_2";         
+        std::string testDirectory = "build/sample_data/coll_2";         
 
         // Assuming the index is already created (assumption is that createIndex has been tested)
         REQUIRE_NOTHROW(searchEngine.createIndex(testDirectory));
@@ -48,6 +56,9 @@ DOCTEST_TEST_CASE("SearchEngine Index Tests") {
         // Add to articleInfo map
         searchEngine.getArticleInfo().insert({"1", result1});
         searchEngine.getArticleInfo().insert({"2", result2});
+
+        // Make sure the map isn't empty
+        REQUIRE_FALSE(searchEngine.getArticleInfo().empty());
 
         // Add IDs to AVLTree for the tokens
         searchEngine.getOrganizerIndex()->insert("sample_query", 1);

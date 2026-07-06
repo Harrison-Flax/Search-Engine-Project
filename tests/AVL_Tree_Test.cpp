@@ -3,7 +3,8 @@
 #include "doctest.h"
 #include <list>
 
-//Using doctest
+// Using doctest
+// Black and White Box Testing
 DOCTEST_TEST_CASE("AVL Tree Balance Check") { //doctest only takes one parameter for test case
     AVLTree<int> tree;
     tree.insert(10);
@@ -190,4 +191,25 @@ DOCTEST_TEST_CASE("Clone") {
     REQUIRE(tree.contains(15, tree.root) == true);
     REQUIRE(tree.contains(10, tree.root) == true);
     REQUIRE(tree.contains(45, tree.root) == true);
+}
+
+// Further White Box Testing
+DOCTEST_TEST_CASE("AVL Tree Internal Functions") {
+    AVLTree<int> tree;
+    tree.insert(15);
+    tree.insert(10);
+    tree.insert(45);
+
+    // Test findNode
+    AVLTree<int>::AvlNode* foundNode = tree.findNode(tree.root, 10);
+    REQUIRE(foundNode != nullptr);
+    REQUIRE(foundNode->element == 10);
+
+    // Test height
+    int height = tree.height(tree.root);
+    REQUIRE(height >= 0); 
+
+    // Test check_balance
+    int balance = tree.check_balance(tree.root);
+    REQUIRE(balance >= -1 && balance <= 1); 
 }
