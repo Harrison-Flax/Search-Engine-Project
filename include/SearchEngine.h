@@ -8,6 +8,9 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 
 class SearchEngine {
 private:
@@ -15,6 +18,13 @@ private:
     AVLOrganizer<std::string>* organizerIndex;
     std::unordered_map<std::string, SearchResult> articleInfo;
     int totalArticles;
+
+    // For Concurrent Query Processing (sourced from my repo, file_runner)
+    std::queue<std::string> jsonQueue;
+    std::mutex queueMutex;
+    std::condition_variable cv;
+    bool extractionComplete;
+    std::mutex treeMutex;
 
 public:
     // Constructor and Destructor
@@ -30,6 +40,13 @@ public:
     std::list<SearchResult> performQuery(const std::string& query);
     std::vector<SearchResult> compareResults(std::vector<SearchResult> listA, std::vector<SearchResult> listB, const std::string& operationType);
     std::vector<SearchResult> searchToken(const std::string& token, const std::string& prefixType, const bool isExcluded);
+
+    // Concurrent Query Processing
+    void createIndexFromKaggle();
+    void consumerWorker();
+    // Needs to be static because it is used as a callback function for libcurl, which requires a C-style function pointer.
+    static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
+    void DecompressZipFromMemory(const std::string& zipData);
 
     // Getters
     std::unordered_map<std::string, SearchResult> getArticleInfo() const;

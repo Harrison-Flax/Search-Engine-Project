@@ -318,6 +318,23 @@ std::vector<SearchResult> SearchEngine::searchToken(const std::string& token, co
     return finalMatches;
 }
 
+// Concurrent query processing functions
+void SearchEngine::createIndexFromKaggle() {
+
+}
+
+void SearchEngine::consumerWorker() {
+
+}
+
+size_t SearchEngine::WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+
+}
+
+void SearchEngine::DecompressZipFromMemory(const std::string& zipData) {
+
+}
+
 // Easy getters for member variables
 std::unordered_map<std::string, SearchResult> SearchEngine::getArticleInfo() const {
     return articleInfo;
