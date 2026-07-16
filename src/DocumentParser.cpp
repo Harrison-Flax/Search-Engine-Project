@@ -101,6 +101,57 @@ SearchResult DocumentParser::parseDocument(const std::string& filePath, int docu
     return result;
 }
 
+// Overloaded parseDocument for rapidjson::Document
+SearchResult DocumentParser::parseDocument(const rapidjson::Document& doc, int documentId, AVLOrganizer<std::string>* organizerIndex) {
+    // Extracting the fields
+    auto title = doc["title"].GetString();
+    auto uuid = doc["uuid"].GetString();
+    auto publication = doc["thread"]["site"].GetString();
+    auto date = doc["published"].GetString();
+    auto text = doc["text"].GetString();
+    auto score = 0.0;
+
+    // Create a SearchResult object with the extracted fields
+    SearchResult result(uuid, title, publication, date, score, text);
+
+    // Person and body need to be inserted into organizerIndex
+    for (const auto& person : doc["entities"]["persons"].GetArray()) {
+        std::string personName = person["name"].GetString();
+        organizerIndex->insert(personName, documentId, "person");
+    }
+
+    // Body needs to be inserted into organizerIndex
+    for (const auto& body : doc["entities"]["bodies"].GetArray()) {
+        std::string bodyName = body["name"].GetString();
+        organizerIndex->insert(bodyName, documentId, "body");
+    }
+
+    // Tokens loop for body text
+    std::istringstream textStream(text);
+    std::string token;
+
+    while (textStream >> token) {
+        // Clean the tokens of punctuation and make them lowercase
+        token.erase(std::remove_if(token.begin(), token.end(), ::ispunct), token.end());
+        std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+
+        // Check for empty tokens
+        if (token.empty()) {
+            continue;
+        }
+
+        // Check if the token is a stop word
+        if (!isStopWord(token)) {
+            // Stem the token
+            std::string stemmedToken = stemWord(token);
+            // Insert the stemmed token into organizerIndex
+            organizerIndex->insert(stemmedToken, documentId, "word");
+        }
+    }
+
+    return result;
+}
+
 bool DocumentParser::isStopWord(const std::string& word) {
     // Need an unordered set to store the stopwords
     // Should be static so that it persists across function calls

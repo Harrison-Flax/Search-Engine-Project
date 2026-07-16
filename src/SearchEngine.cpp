@@ -320,19 +320,141 @@ std::vector<SearchResult> SearchEngine::searchToken(const std::string& token, co
 
 // Concurrent query processing functions
 void SearchEngine::createIndexFromKaggle() {
+    CURL* curl;
+	CURLcode res; 
+	std::string readBuffer;
+	rapidjson::Document document;
 
+	// Reference: https://curl.se/libcurl/c/libcurl-tutorial.html
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+	curl = curl_easy_init();
+
+	if (curl) {
+		// Kaggle URL from dataset
+		curl_easy_setopt(curl, CURLOPT_URL, "https://www.kaggle.com/api/v1/datasets/download/jeet2016/us-financial-news-articles");
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+
+		// Written to callback function and buffer memory address
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+		// Execution of request over network
+		res = curl_easy_perform(curl);
+
+		// Transfer check
+		if (res != CURLE_OK) {
+			std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+		} else {
+			std::cout << "Download Complete! Size: " << readBuffer.size() << " bytes." << std::endl;
+			// Unzip
+			DecompressZipFromMemory(readBuffer);
+			// Parse it
+			document.Parse(readBuffer)
+		}
+
+		// Cleaning up easy resources
+		curl_easy_cleanup(curl);
+	}
+
+	// Cleaning uo global resources
+	curl_global_cleanup();
 }
 
+// Main concurrency function
 void SearchEngine::consumerWorker() {
+    while (true) {
+		std::string rawJson;
 
+		// Mutex needs to be locked and unlocked
+		std::unique_lock<std::mutex> lock(queueMutex);
+
+		// Lambda statement for wait where if sleeping, mutex is unlocked
+		// Otherwise, if woken up, mutex is relocked
+		cv.wait(lock, [] { return !jsonQueue.empty() || extractionComplete; });
+
+		// Exit the queue
+		if (jsonQueue.empty() && extractionComplete) {
+			return;
+		}
+
+		// Data is grabbed and popped from queue
+		rawJson = std::move(jsonQueue.front());
+		jsonQueue.pop();
+
+		// Parsing the JSON
+		rapidjson::Document d;
+		d.Parse(rawJson.c_str());
+
+		// Pass the popped string to DocumentParser
+        DocumentParser::parseDocument(d);
+
+		// AVL Tree insertion
+		// Using lock_guard to lock on creation and unlock on destruction
+		std::lock_guard<std::mutex> treeLock(treeMutex);
+		organizerIndex->insert();
+	}
 }
 
+// Reference: https://gist.github.com/alghanmi/c5d7b761b2c9ab199157#file-curl_example-cpp
 size_t SearchEngine::WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+    size_t totalSize = size * nmemb;
 
+	// Storing in a string for the data
+	std::string* reponseString = static_cast<std::string*>(userp);
+	responseString->append(static_cast<char*>(contents), totalSize);
+	return totalSize;
 }
 
+// Reference: https://libzip.org/documentation/
 void SearchEngine::DecompressZipFromMemory(const std::string& zipData) {
+    zip_error_t error;
+	zip_error_init(&error);
 
+	// Libzip source is created
+	zip_source_t* src = zip_source_buffer_create(zipData.data(), zipData.size(), 0, &error);
+
+	// Zip is opened
+	zip_t* archive = zip_open_from_source(src, ZIP_RDONLY, &error);
+
+	// Entries in zip
+	zip_int64_t numEntries = zip_get_num_entries(archive, 0);
+	std::cout << "Total files in ZIP: " << numEntries << std::endl;
+
+	// Extracting each JSON file
+	for (zip_int64_t i = 0; i < numEntries; ++i) {
+		const char* name = zip_get_name(archive, i, 0);
+		if (!name) continue;
+
+		std::cout << "Extracting: " << name << std::endl;
+
+		// Open each of the JSON files in the ZIP
+		zip_file_t* file = zip_fopen_index(archive, i, 0);
+
+		// Listing the file information for uncompressed size
+		zip_stat_t stat;
+		if (zip_stat_index(archive, i, 0, &stat) == 0 && (stat.valid & ZIP_STAT_SIZE)) {
+			// File is read into the buffer
+            std::vector<char> buffer(stat.size);
+			zip_int64_t bytesRead = zip_fread(file, buffer.data(), stat.size);
+
+			std::cout << "Read " << bytesRead << " bytes!" << std::endl;
+		}
+
+        // Locking the queueMutex
+        std::lock_guard<std::mutex> lock(queueMutex);
+        // Pushing the JSON data into the queue
+        jsonQueue.push(std::string(buffer.begin(), buffer.end()));
+        // Unlock and call the cv
+        cv.wait(lock, [] { return !jsonQueue.empty(); });
+        cv.notify_one();
+
+		// Closing the zip once done
+		zip_fclose(file);
+	}
+
+	// Cleaning up functions in memory
+	zip_close(archive);
+	zip_error_fini(&error);
 }
 
 // Easy getters for member variables

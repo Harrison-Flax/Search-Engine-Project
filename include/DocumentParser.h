@@ -12,6 +12,8 @@ public:
 
     // Parsing
     SearchResult parseDocument(const std::string& filePath, int documentId, AVLOrganizer<std::string>* organizerIndex);
+    // Overloaded parseDocument for rapidjson::Document
+    SearchResult parseDocument(const rapidjson::Document& doc, int documentId, AVLOrganizer<std::string>* organizerIndex);
 
     // Check for stop words
     bool isStopWord(const std::string& word);

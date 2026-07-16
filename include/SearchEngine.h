@@ -11,6 +11,9 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <thread>
+#include <zip.h>
+#include <curl/curl.h>
 
 class SearchEngine {
 private:
