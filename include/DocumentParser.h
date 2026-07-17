@@ -4,6 +4,7 @@
 #include "AVLOrganizer.h"
 #include "SearchResult.h"
 #include <string>
+#include <mutex>
 
 class DocumentParser {
 public:
@@ -13,7 +14,7 @@ public:
     // Parsing
     SearchResult parseDocument(const std::string& filePath, int documentId, AVLOrganizer<std::string>* organizerIndex);
     // Overloaded parseDocument for rapidjson::Document
-    SearchResult parseDocument(const rapidjson::Document& doc, int documentId, AVLOrganizer<std::string>* organizerIndex);
+    SearchResult parseDocument(const rapidjson::Document& doc, int documentId, AVLOrganizer<std::string>* organizerIndex, std::mutex& treeMutex);
 
     // Check for stop words
     bool isStopWord(const std::string& word);

@@ -102,51 +102,84 @@ SearchResult DocumentParser::parseDocument(const std::string& filePath, int docu
 }
 
 // Overloaded parseDocument for rapidjson::Document
-SearchResult DocumentParser::parseDocument(const rapidjson::Document& doc, int documentId, AVLOrganizer<std::string>* organizerIndex) {
-    // Extracting the fields
-    auto title = doc["title"].GetString();
-    auto uuid = doc["uuid"].GetString();
-    auto publication = doc["thread"]["site"].GetString();
-    auto date = doc["published"].GetString();
-    auto text = doc["text"].GetString();
-    auto score = 0.0;
+SearchResult DocumentParser::parseDocument(const rapidjson::Document& doc, int documentId, AVLOrganizer<std::string>* organizerIndex, std::mutex& treeMutex) {
+    // Extracting fields with check for empty string with ternary to avoid failing
+    std::string title = (doc.HasMember("title") && doc["title"].IsString()) ? doc["title"].GetString() : "";
+    std::string uuid = (doc.HasMember("uuid") && doc["uuid"].IsString()) ? doc["uuid"].GetString() : "";
+    std::string date = (doc.HasMember("published") && doc["published"].IsString()) ? doc["published"].GetString() : "";
+    std::string text = (doc.HasMember("text") && doc["text"].IsString()) ? doc["text"].GetString() : "";
 
-    // Create a SearchResult object with the extracted fields
+    // Defensive check for publication field
+    std::string publication = "";
+    if (doc.HasMember("thread") && doc["thread"].IsObject() &&
+        doc["thread"].HasMember("site") && doc["thread"]["site"].IsString()) {
+        publication = doc["thread"]["site"].GetString();
+    }
+
+    double score = 0.0;
     SearchResult result(uuid, title, publication, date, score, text);
 
-    // Person and body need to be inserted into organizerIndex
-    for (const auto& person : doc["entities"]["persons"].GetArray()) {
-        std::string personName = person["name"].GetString();
-        organizerIndex->insert(personName, documentId, "person");
+    // Local memory before locking the mutex
+    std::vector<std::string> localPersons;
+    std::vector<std::string> localBodies;
+    std::vector<std::string> localWords;
+
+    // Parsing and defensive checkes for entities
+    if (doc.HasMember("entities") && doc["entities"].IsObject()) {
+        // Persons
+        if (doc["entities"].HasMember("persons") && doc["entities"]["persons"].IsArray()) {
+            for (const auto& person : doc["entities"]["persons"].GetArray()) {
+                if (person.HasMember("name") && person["name"].IsString()) {
+                    localPersons.push_back(person["name"].GetString());
+                }
+            }
+        }
+
+        // Bodies
+        if (doc["entities"].HasMember("bodies") && doc["entities"]["bodies"].IsArray()) {
+            for (const auto& body : doc["entities"]["bodies"].GetArray()) {
+                if (body.HasMember("name") && body["name"].IsString()) {
+                    localBodies.push_back(body["name"].GetString());
+                }
+            }
+        }
     }
 
-    // Body needs to be inserted into organizerIndex
-    for (const auto& body : doc["entities"]["bodies"].GetArray()) {
-        std::string bodyName = body["name"].GetString();
-        organizerIndex->insert(bodyName, documentId, "body");
-    }
-
-    // Tokens loop for body text
+    // Tokenizing the text
     std::istringstream textStream(text);
     std::string token;
 
     while (textStream >> token) {
-        // Clean the tokens of punctuation and make them lowercase
         token.erase(std::remove_if(token.begin(), token.end(), ::ispunct), token.end());
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
 
-        // Check for empty tokens
-        if (token.empty()) {
+        if (token.empty() || isStopWord(token)) {
             continue;
         }
 
-        // Check if the token is a stop word
-        if (!isStopWord(token)) {
-            // Stem the token
-            std::string stemmedToken = stemWord(token);
-            // Insert the stemmed token into organizerIndex
+        // Stemming and storing locally before inserting into the tree
+        // To prevent locking
+        localWords.push_back(stemWord(token));
+    }
+
+    // Brackets here only lock insertion into AVL tree to prevent race conditions
+    {
+        // Locking the mutex only once
+        std::lock_guard<std::mutex> treeLock(treeMutex);
+        
+        // Insert the parsed entities into the AVL tree
+        for (const auto& personName : localPersons) {
+            organizerIndex->insert(personName, documentId, "person");
+        }
+
+        for (const auto& bodyName : localBodies) {
+            organizerIndex->insert(bodyName, documentId, "body");
+        }
+
+        for (const auto& stemmedToken : localWords) {
             organizerIndex->insert(stemmedToken, documentId, "word");
         }
+    // Mutex is unlocked here when treeLock goes out of scope
     }
 
     return result;

@@ -20,6 +20,10 @@ target_include_directories(supersearch PRIVATE include/ include/rapidjson/)
 target_include_directories(rapidJSONExample PRIVATE include/rapidjson/)
 target_include_directories(AVL_Tree_Test PRIVATE include/)
 target_include_directories(Parser_Test PRIVATE include/ include/rapidjson/)
+# For CURL and libzip 
+find_package(CURL REQUIRED)
+find_package(libzip REQUIRED)
+target_link_libraries(supersearch PRIVATE CURL::libcurl libzip::zip)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
