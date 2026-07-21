@@ -418,6 +418,14 @@ void SearchEngine::DecompressZipFromMemory(const std::string& zipData) {
 
 	// Zip is opened
 	zip_t* archive = zip_open_from_source(src, ZIP_RDONLY, &error);
+    // Error handling to know fail point
+    if (!archive) {
+        std::cerr << "Failed to open zip archive in memory!" << std::endl;
+        // Free the source and finalize the error
+        zip_source_free(src);
+        zip_error_fini(&error);
+        return;
+    }
 
 	// Entries in zip
 	zip_int64_t numEntries = zip_get_num_entries(archive, 0);
@@ -428,34 +436,38 @@ void SearchEngine::DecompressZipFromMemory(const std::string& zipData) {
 		const char* name = zip_get_name(archive, i, 0);
 		if (!name) continue;
 
-		std::cout << "Extracting: " << name << std::endl;
-
 		// Open each of the JSON files in the ZIP
 		zip_file_t* file = zip_fopen_index(archive, i, 0);
+        // Error handling for file opening
+        if (!file) continue;
 
 		// Listing the file information for uncompressed size
 		zip_stat_t stat;
 		if (zip_stat_index(archive, i, 0, &stat) == 0 && (stat.valid & ZIP_STAT_SIZE)) {
-			// File is read into the buffer
+			// Decompressed file is read into the buffer
             std::vector<char> buffer(stat.size);
 			zip_int64_t bytesRead = zip_fread(file, buffer.data(), stat.size);
 
-			std::cout << "Read " << bytesRead << " bytes!" << std::endl;
-		}
+			if (bytesRead > 0) {
+                // Raw byte buffer is converted into a C++ string
+                std::string jsonString(buffer.begin(), buffer.begin() + bytesRead);
 
-        // Locking the queueMutex
-        std::lock_guard<std::mutex> lock(queueMutex);
-        // Pushing the JSON data into the queue
-        jsonQueue.push(std::string(buffer.begin(), buffer.end()));
-        // Unlock and call the cv
-        cv.wait(lock, [] { return !jsonQueue.empty(); });
-        cv.notify_one();
+                // Locking queue and pushing the extracted string
+                {
+                    std::lock_guard<std::mutex> lock(queueMutex);
+                    jsonQueue.push(std::move(jsonString));
+                }
+                
+                // Notify the consumer thread that new data is available
+                cv.notify_one();
+            }
+		}
 
 		// Closing the zip once done
 		zip_fclose(file);
 	}
 
-	// Cleaning up functions in memory
+	// Cleaning up functions in memory for libzip
 	zip_close(archive);
 	zip_error_fini(&error);
 }

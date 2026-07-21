@@ -2,8 +2,7 @@
 #include "../include/SearchEngine.h"
 #include "../include/AVLOrganizer.h"
 #include "../include/doctest.h"
-#include "../src/SearchEngine.cpp"
-#include "../src/DocumentParser.cpp"
+#include "../include/DocumentParser.h"
 
 DOCTEST_TEST_CASE("SearchEngine Index Tests") {
     SearchEngine searchEngine;
