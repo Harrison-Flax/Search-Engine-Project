@@ -8,8 +8,8 @@
 #include <iomanip>
 
 // RapidJSON headers we need for our parsing.
-#include "rapidjson/istreamwrapper.h"
-#include "rapidjson/document.h"
+#include "../include/rapidjson/istreamwrapper.h"
+#include "../include/rapidjson/document.h"
 
 using namespace rapidjson;
 using namespace std;

@@ -349,7 +349,7 @@ void SearchEngine::createIndexFromKaggle() {
 			// Unzip
 			DecompressZipFromMemory(readBuffer);
 			// Parse it
-			document.Parse(readBuffer)
+			document.Parse(readBuffer.c_str());
 		}
 
 		// Cleaning up easy resources
@@ -370,7 +370,7 @@ void SearchEngine::consumerWorker() {
 
 		// Lambda statement for wait where if sleeping, mutex is unlocked
 		// Otherwise, if woken up, mutex is relocked
-		cv.wait(lock, [] { return !jsonQueue.empty() || extractionComplete; });
+		cv.wait(lock, [this] { return !jsonQueue.empty() || extractionComplete; });
 
 		// Exit the queue
 		if (jsonQueue.empty() && extractionComplete) {
@@ -381,17 +381,20 @@ void SearchEngine::consumerWorker() {
 		rawJson = std::move(jsonQueue.front());
 		jsonQueue.pop();
 
+        // After leaving queue, unlock mutex
+        lock.unlock();
+
 		// Parsing the JSON
 		rapidjson::Document d;
 		d.Parse(rawJson.c_str());
 
-		// Pass the popped string to DocumentParser
-        DocumentParser::parseDocument(d);
+        // Thread safety ID
+        static std::atomic<int> documentIdCounter{0};
+        int currentId = ++documentIdCounter;
 
-		// AVL Tree insertion
-		// Using lock_guard to lock on creation and unlock on destruction
-		std::lock_guard<std::mutex> treeLock(treeMutex);
-		organizerIndex->insert();
+		// Pass the popped string to DocumentParser
+        DocumentParser parser;
+        parser.parseDocument(d, currentId, organizerIndex, treeMutex);
 	}
 }
 
@@ -400,7 +403,7 @@ size_t SearchEngine::WriteCallback(void* contents, size_t size, size_t nmemb, vo
     size_t totalSize = size * nmemb;
 
 	// Storing in a string for the data
-	std::string* reponseString = static_cast<std::string*>(userp);
+	std::string* responseString = static_cast<std::string*>(userp);
 	responseString->append(static_cast<char*>(contents), totalSize);
 	return totalSize;
 }

@@ -13,6 +13,7 @@
 #include <condition_variable>
 #include <thread>
 #include <zip.h>
+#include <atomic>
 #include <curl/curl.h>
 
 class SearchEngine {
