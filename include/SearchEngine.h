@@ -30,6 +30,9 @@ private:
     bool extractionComplete;
     std::mutex treeMutex;
 
+    // Reading in API keys from environment variables
+    std::string getKaggleCredentials();
+
 public:
     // Constructor and Destructor
     SearchEngine();

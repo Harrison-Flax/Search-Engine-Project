@@ -15,6 +15,8 @@
 #include <algorithm>
 #include <chrono>
 #include <map>
+// For reading in API keys
+#include <cstdlib>
 
 using namespace rapidjson;
 
@@ -318,6 +320,45 @@ std::vector<SearchResult> SearchEngine::searchToken(const std::string& token, co
     return finalMatches;
 }
 
+std::string SearchEngine::getKaggleCredentials() {
+    // Navigate to home directory on local machine
+    const char* homeDir = std::getenv("HOME");
+    if (!homeDir) {
+        std::cerr << "HOME environment variable not set." << std::endl;
+        return "";
+    }
+
+    // Path to kaggle.json
+    std::string kagglePath = std::string(homeDir) + "/.kaggle/kaggle.json";
+
+    // File stream
+    std::ifstream ifs(kagglePath);
+    if (!ifs.is_open()) {
+        std::cerr << "Could not open kaggle.json at: " << kagglePath << std::endl;
+        return "";
+    }
+
+    // Parsing JSON file
+    rapidjson::IStreamWrapper isw(ifs);
+    rapidjson::Document doc;
+    doc.ParseStream(isw);
+
+    // Extracting username and API key
+    // Then put it in libcurl format to read properly
+    if (doc.HasMember("username") && doc["username"].IsString() &&
+        doc.HasMember("key") && doc["key"].IsString()) {
+        
+        std::string username = doc["username"].GetString();
+        std::string key = doc["key"].GetString();
+        
+        // libcurl format
+        return username + ":" + key;
+    }
+
+    std::cerr << "Invalid kaggle.json format." << std::endl;
+    return "";
+}
+
 // Concurrent query processing functions
 void SearchEngine::createIndexFromKaggle() {
     CURL* curl;
@@ -333,6 +374,17 @@ void SearchEngine::createIndexFromKaggle() {
 		// Kaggle URL from dataset
 		curl_easy_setopt(curl, CURLOPT_URL, "https://www.kaggle.com/api/v1/datasets/download/jeet2016/us-financial-news-articles");
 		curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+
+        // Get the credentials from the environment variable
+        std::string credentials = getKaggleCredentials();
+        if (!credentials.empty()) {
+            curl_easy_setopt(curl, CURLOPT_USERPWD, credentials.c_str());
+        } else {
+            std::cerr << "Kaggle credentials not found. Please ensure kaggle.json is in the ~/.kaggle/ directory." << std::endl;
+        }
+
+        // libcurl should follow HTTP redirects just in case
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
 		// Written to callback function and buffer memory address
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
@@ -490,7 +542,7 @@ void SearchEngine::ui() {
     std::string input;
     while (true) {
         std::cout << "\n--- Search Engine UI ---\n";
-        std::cout << "1. Create index from directory\n";
+        std::cout << "1. Create index from Kaggle API\n";
         std::cout << "2. Save index to file\n";
         std::cout << "3. Load index from file\n";
         std::cout << "4. Perform a search query\n";
@@ -499,9 +551,8 @@ void SearchEngine::ui() {
         std::getline(std::cin, input);
 
         if (input == "1") {
-            std::cout << "Enter directory path: ";
-            std::getline(std::cin, input);
-            createIndex(input);
+            std::cout << "Starting download over network and local memory indexing...\n";
+            createIndexFromKaggle();
         } else if (input == "2") {
             std::cout << "Enter filename to save index: ";
             std::getline(std::cin, input);
@@ -546,7 +597,7 @@ void SearchEngine::go(int argc, char** argv) {
     if (command == "ui") {
         ui();
     } else if (command == "create_index" && argc == 3) {
-        createIndex(argv[2]);
+        createIndexFromKaggle();
     } else if (command == "save_index" && argc == 3) {
         saveIndexToFile(argv[2]);
     } else if (command == "load_index" && argc == 3) {
