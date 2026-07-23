@@ -26,6 +26,7 @@ private:
     // For Concurrent Query Processing (sourced from my repo, file_runner)
     std::queue<std::string> jsonQueue;
     std::mutex queueMutex;
+    std::mutex mapMutex;
     std::condition_variable cv;
     bool extractionComplete;
     std::mutex treeMutex;

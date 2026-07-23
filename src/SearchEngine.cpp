@@ -410,6 +410,30 @@ void SearchEngine::createIndexFromKaggle() {
 
 			// Unzip via producer
 			DecompressZipFromMemory(readBuffer);
+            
+            // Setting up terminal progress bar for parsing
+            // With thread safety to avoid race conditions
+            while (true) {
+                size_t remainingFiles = 0;
+
+                // Mutex will be locked to read the size
+                {
+                    std::lock_guard<std::mutex> lock(queueMutex);
+                    remainingFiles = jsonQueue.size();
+                }
+
+                if (remainingFiles == 0) {
+                    break;
+                }
+
+                std::cout << "\rParsing: " << remainingFiles << " files remaining." << std::flush;
+                
+                // 50 ms is enough to prevent excessive CPU usage while still being responsive
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
+
+            // Final message to indicate all files have been processed to user
+            std::cout << "\rParsing: 0 files remaining. All files have been processed." << std::endl;
 
             // Tell consumer threads that no more files are coming
             {
@@ -466,12 +490,21 @@ void SearchEngine::consumerWorker() {
 		d.Parse(rawJson.c_str());
 
         // Thread safety ID
+        // Using atomic to ensure that each document gets a unique ID even when multiple threads are running
         static std::atomic<int> documentIdCounter{0};
         int currentId = ++documentIdCounter;
 
 		// Pass the popped string to DocumentParser
         DocumentParser parser;
-        parser.parseDocument(d, currentId, organizerIndex, treeMutex);
+        SearchResult result = parser.parseDocument(d, currentId, organizerIndex, treeMutex);
+
+        // Locking the map mutex to store the result and increment counter
+        // Maps are also fast and don't need a queue here
+        {
+            std::lock_guard<std::mutex> mapLock(mapMutex);
+            articleInfo[std::to_string(currentId)] = result;
+            ++totalArticles;
+        }
 	}
 }
 
@@ -542,6 +575,13 @@ void SearchEngine::DecompressZipFromMemory(const std::string& zipData) {
 
 		// Closing the zip once done
 		zip_fclose(file);
+
+        // Terminal progress bar for extraction
+        // Should only update for every 1,000 files or number of entries and calculate the percentage
+        if ((i + 1) % 1000 == 0 || (i + 1) == numEntries) {
+            double percentage = ((i + 1) / static_cast<double>(numEntries)) * 100.0;
+            std::cout << "\rExtracting: " << static_cast<int>(percentage) << "% completed." << std::flush;
+        }
 	}
 
 	// Cleaning up functions in memory for libzip
