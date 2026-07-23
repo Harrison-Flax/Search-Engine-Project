@@ -364,7 +364,6 @@ void SearchEngine::createIndexFromKaggle() {
     CURL* curl;
 	CURLcode res; 
 	std::string readBuffer;
-	rapidjson::Document document;
 
 	// Reference: https://curl.se/libcurl/c/libcurl-tutorial.html
 	curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -398,10 +397,36 @@ void SearchEngine::createIndexFromKaggle() {
 			std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
 		} else {
 			std::cout << "Download Complete! Size: " << readBuffer.size() << " bytes." << std::endl;
-			// Unzip
+            std::cout << "Spawning consumer threads and extracting zip files..." << std::endl;
+
+            // Spawning the consumer threads
+            std::vector<std::thread> workers;
+            // CPU cores are detected and used to spawn threads
+            unsigned int numThreads = std::thread::hardware_concurrency();
+            for (unsigned int i = 0; i < numThreads; ++i) {
+                // Thread belongs to this class and calls the consumerWorker function
+                workers.emplace_back(&SearchEngine::consumerWorker, this);
+            }
+
+			// Unzip via producer
 			DecompressZipFromMemory(readBuffer);
-			// Parse it
-			document.Parse(readBuffer.c_str());
+
+            // Tell consumer threads that no more files are coming
+            {
+                std::lock_guard<std::mutex> lock(queueMutex);
+                extractionComplete = true;
+            }
+            // Notify all waiting threads
+            cv.notify_all();
+
+            // All threads need to finish before continuing
+            for (auto& t : workers) {
+                if (t.joinable()) {
+                    t.join();
+                }
+            }
+
+            std::cout << "All consumer threads have completed processing." << std::endl;
 		}
 
 		// Cleaning up easy resources
