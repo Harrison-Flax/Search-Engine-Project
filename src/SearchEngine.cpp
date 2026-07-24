@@ -411,6 +411,13 @@ void SearchEngine::createIndexFromKaggle() {
 			// Unzip via producer
 			DecompressZipFromMemory(readBuffer);
             
+            // Total number of files in queue
+            size_t totalFilesToParse = 0;
+            {
+                std::lock_guard<std::mutex> lock(queueMutex);
+                totalFilesToParse = jsonQueue.size();
+            }
+
             // Setting up terminal progress bar for parsing
             // With thread safety to avoid race conditions
             while (true) {
@@ -426,11 +433,41 @@ void SearchEngine::createIndexFromKaggle() {
                     break;
                 }
 
-                std::cout << "\rParsing: " << remainingFiles << " files remaining." << std::flush;
+                // Calculate progress
+                double progress = 1.0 - (static_cast<double>(remainingFiles) / totalFilesToParse);
+
+                // Visual aspects of bar
+                int barWidth = 50;
+                int filledWidth = static_cast<int>(barWidth * progress);
+
+                // Green color switch and opening of bracket
+                // Using the ANSI escape code for green text (terminal needs ANSI support)
+                std::cout << "\r\033[32mParsing [";
+
+                // Progression loop
+                for (int i = 0; i < barWidth; ++i) {
+                    if (i < filledWidth) {
+                        // Filled
+                        std::cout << "█";
+                    } else {
+                        // Empty
+                        std::cout << " ";
+                    }
+                }
+
+                // Closing bracket, displaying percent, and resetting to normal color
+                std::cout << "] " << static_cast<int>(progress * 100.0) << "%\033[0m" << std::flush;
                 
                 // 50 ms is enough to prevent excessive CPU usage while still being responsive
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
+
+            // Final state
+            std::cout << "\r\033[32mParsing [";
+            for (int i = 0; i < 50; ++i) {
+                std::cout << "█";
+            }
+            std::cout << "] 100%\033[0m" << std::flush;
 
             // Final message to indicate all files have been processed to user
             std::cout << "\rParsing: 0 files remaining. All files have been processed." << std::endl;
@@ -579,8 +616,30 @@ void SearchEngine::DecompressZipFromMemory(const std::string& zipData) {
         // Terminal progress bar for extraction
         // Should only update for every 1,000 files or number of entries and calculate the percentage
         if ((i + 1) % 1000 == 0 || (i + 1) == numEntries) {
-            double percentage = ((i + 1) / static_cast<double>(numEntries)) * 100.0;
-            std::cout << "\rExtracting: " << static_cast<int>(percentage) << "% completed." << std::flush;
+            // Calculating progress
+            double progress = ((i + 1) / static_cast<double>(numEntries));
+            
+            // Visual aspects of bar
+            int barWidth = 50;
+            int filledWidth = static_cast<int>(barWidth * progress);
+
+            // Green color
+            std::cout << "\r\033[32mExtracting [";
+
+            // Progression loop
+            for (int j = 0; j < barWidth; ++j) {
+                if (j < filledWidth) {
+                    std::cout << "█";
+                } else {
+                    std::cout << " ";
+                }
+            }
+            std::cout << "] " << static_cast<int>(progress * 100) << "%\033[0m" << std::flush;
+
+            // Next progress bar starts below after finished
+            if ((i + 1) == numEntries) {
+                std::cout << std::endl;
+            }
         }
 	}
 
