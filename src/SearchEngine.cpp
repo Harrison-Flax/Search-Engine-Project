@@ -361,6 +361,13 @@ std::string SearchEngine::getKaggleCredentials() {
 
 // Concurrent query processing functions
 void SearchEngine::createIndexFromKaggle() {
+    // Resetting the state flags
+    extractionComplete = false;
+
+    // Clearing the queue from previous runs
+    std::queue<std::string> empty;
+    std::swap(jsonQueue, empty);
+    
     CURL* curl;
 	CURLcode res; 
 	std::string readBuffer;

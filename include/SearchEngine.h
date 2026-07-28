@@ -21,14 +21,14 @@ private:
     // Data members
     AVLOrganizer<std::string>* organizerIndex;
     std::unordered_map<std::string, SearchResult> articleInfo;
-    int totalArticles;
+    int totalArticles = 0;
 
     // For Concurrent Query Processing (sourced from my repo, file_runner)
     std::queue<std::string> jsonQueue;
     std::mutex queueMutex;
     std::mutex mapMutex;
     std::condition_variable cv;
-    bool extractionComplete;
+    bool extractionComplete = false;
     std::mutex treeMutex;
 
     // Reading in API keys from environment variables
