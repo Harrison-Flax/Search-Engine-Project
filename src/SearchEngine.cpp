@@ -419,9 +419,6 @@ void SearchEngine::createIndexFromKaggle() {
                 // Thread belongs to this class and calls the consumerWorker function
                 workers.emplace_back(&SearchEngine::consumerWorker, this);
             }
-
-			// Unzip via producer
-			DecompressZipFromMemory(readBuffer);
             
             // Total number of files in queue
             // Unzips via the producer and counts the total
@@ -537,6 +534,12 @@ void SearchEngine::consumerWorker() {
 		// Parsing the JSON
 		rapidjson::Document d;
 		d.Parse(rawJson.c_str());
+
+        // Check if the JSON is valid
+        if (d.HasParseError() || !d.IsObject()) {
+            std::cerr << "Error parsing JSON document in consumer thread. Skipping to next file." << std::endl;
+            continue; 
+        }
 
         // Thread safety ID
         // Using atomic to ensure that each document gets a unique ID even when multiple threads are running
