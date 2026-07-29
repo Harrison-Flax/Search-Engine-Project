@@ -537,7 +537,7 @@ void SearchEngine::consumerWorker() {
 
         // Check if the JSON is valid
         if (d.HasParseError() || !d.IsObject()) {
-            std::cerr << "Error parsing JSON document in consumer thread. Skipping to next file." << std::endl;
+            std::cerr << "\nError parsing JSON document in consumer thread. Skipping to next file." << std::endl;
             continue; 
         }
 
