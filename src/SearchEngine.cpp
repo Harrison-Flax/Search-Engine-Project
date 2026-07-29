@@ -368,6 +368,7 @@ void SearchEngine::createIndexFromKaggle() {
     
     // Resetting the state flags
     extractionComplete = false;
+    filesProcessed = 0;
 
     // Clearing the queue from previous runs
     std::queue<std::string> empty;
@@ -432,7 +433,7 @@ void SearchEngine::createIndexFromKaggle() {
                 // Mutex will be locked to read the size
                 {
                     std::lock_guard<std::mutex> lock(mapMutex);
-                    currentParsed = static_cast<size_t>(totalArticles);
+                    currentParsed = static_cast<size_t>(filesProcessed);
                 }
 
                 if (currentParsed >= totalFilesToParse) {
@@ -473,7 +474,7 @@ void SearchEngine::createIndexFromKaggle() {
             for (int i = 0; i < 50; ++i) {
                 std::cout << "█";
             }
-            std::cout << "] 100%\033[0m" << std::flush;
+            std::cout << "] 100%\033[0m\n" << std::flush;
 
             // Final message to indicate all files have been processed to user
             std::cout << "\rParsing: 0 files remaining. All files have been processed." << std::endl;
@@ -531,6 +532,13 @@ void SearchEngine::consumerWorker() {
         // After leaving queue, unlock mutex
         lock.unlock();
 
+        int currentProgressId = 0;
+        {
+            std::lock_guard<std::mutex> mapLock(mapMutex);
+            ++filesProcessed;
+            currentProgressId = filesProcessed;
+        }
+
 		// Parsing the JSON
 		rapidjson::Document d;
 		d.Parse(rawJson.c_str());
@@ -541,20 +549,15 @@ void SearchEngine::consumerWorker() {
             continue; 
         }
 
-        // Thread safety ID
-        // Using atomic to ensure that each document gets a unique ID even when multiple threads are running
-        static std::atomic<int> documentIdCounter{0};
-        int currentId = ++documentIdCounter;
-
 		// Pass the popped string to DocumentParser
         DocumentParser parser;
-        SearchResult result = parser.parseDocument(d, currentId, organizerIndex, treeMutex);
+        SearchResult result = parser.parseDocument(d, currentProgressId, organizerIndex, treeMutex);
 
         // Locking the map mutex to store the result and increment counter
         // Maps are also fast and don't need a queue here
         {
             std::lock_guard<std::mutex> mapLock(mapMutex);
-            articleInfo[std::to_string(currentId)] = result;
+            articleInfo[std::to_string(currentProgressId)] = result;
             ++totalArticles;
         }
 	}

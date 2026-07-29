@@ -22,6 +22,7 @@ private:
     AVLOrganizer<std::string>* organizerIndex;
     std::unordered_map<std::string, SearchResult> articleInfo;
     int totalArticles = 0;
+    int filesProcessed = 0;
 
     // For Concurrent Query Processing (sourced from my repo, file_runner)
     std::queue<std::string> jsonQueue;
