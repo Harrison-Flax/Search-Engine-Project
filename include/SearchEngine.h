@@ -54,7 +54,7 @@ public:
     void consumerWorker();
     // Needs to be static because it is used as a callback function for libcurl, which requires a C-style function pointer.
     static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
-    void DecompressZipFromMemory(const std::string& zipData);
+    size_t DecompressZipFromMemory(const std::string& zipData);
 
     // Getters
     std::unordered_map<std::string, SearchResult> getArticleInfo() const;

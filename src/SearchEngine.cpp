@@ -361,6 +361,11 @@ std::string SearchEngine::getKaggleCredentials() {
 
 // Concurrent query processing functions
 void SearchEngine::createIndexFromKaggle() {
+    // isStopWord needs to be on the main thread only
+    // So the other threads don't all hit it at the same time
+    DocumentParser warmup;
+    warmup.isStopWord("warmup");
+    
     // Resetting the state flags
     extractionComplete = false;
 
@@ -419,29 +424,26 @@ void SearchEngine::createIndexFromKaggle() {
 			DecompressZipFromMemory(readBuffer);
             
             // Total number of files in queue
-            size_t totalFilesToParse = 0;
-            {
-                std::lock_guard<std::mutex> lock(queueMutex);
-                totalFilesToParse = jsonQueue.size();
-            }
+            // Unzips via the producer and counts the total
+            size_t totalFilesToParse = DecompressZipFromMemory(readBuffer);
 
             // Setting up terminal progress bar for parsing
             // With thread safety to avoid race conditions
             while (true) {
-                size_t remainingFiles = 0;
+                int currentParsed = 0;
 
                 // Mutex will be locked to read the size
                 {
-                    std::lock_guard<std::mutex> lock(queueMutex);
-                    remainingFiles = jsonQueue.size();
+                    std::lock_guard<std::mutex> lock(mapMutex);
+                    currentParsed = totalArticles;
                 }
 
-                if (remainingFiles == 0) {
+                if (currentParsed >= totalFilesToParse) {
                     break;
                 }
 
                 // Calculate progress
-                double progress = 1.0 - (static_cast<double>(remainingFiles) / totalFilesToParse);
+                double progress = static_cast<double>(currentParsed) / totalFilesToParse;
 
                 // Visual aspects of bar
                 int barWidth = 50;
@@ -526,6 +528,9 @@ void SearchEngine::consumerWorker() {
 		rawJson = std::move(jsonQueue.front());
 		jsonQueue.pop();
 
+        // Notify other threads (producer) that a slot is available in the queue
+        cv.notify_all();
+
         // After leaving queue, unlock mutex
         lock.unlock();
 
@@ -563,7 +568,7 @@ size_t SearchEngine::WriteCallback(void* contents, size_t size, size_t nmemb, vo
 }
 
 // Reference: https://libzip.org/documentation/
-void SearchEngine::DecompressZipFromMemory(const std::string& zipData) {
+size_t SearchEngine::DecompressZipFromMemory(const std::string& zipData) {
     zip_error_t error;
 	zip_error_init(&error);
 
@@ -578,7 +583,8 @@ void SearchEngine::DecompressZipFromMemory(const std::string& zipData) {
         // Free the source and finalize the error
         zip_source_free(src);
         zip_error_fini(&error);
-        return;
+        
+        return 0;
     }
 
 	// Entries in zip
@@ -608,7 +614,13 @@ void SearchEngine::DecompressZipFromMemory(const std::string& zipData) {
 
                 // Locking queue and pushing the extracted string
                 {
-                    std::lock_guard<std::mutex> lock(queueMutex);
+                    // unique lock for waiting on condition variable
+                    std::unique_lock<std::mutex> lock(queueMutex);
+                    
+                    // Bounded Queue
+                    // Wait until size is less than 2000 to avoid memory issues
+                    cv.wait(lock, [this] { return jsonQueue.size() < 2000; });
+
                     jsonQueue.push(std::move(jsonString));
                 }
                 
@@ -653,6 +665,8 @@ void SearchEngine::DecompressZipFromMemory(const std::string& zipData) {
 	// Cleaning up functions in memory for libzip
 	zip_close(archive);
 	zip_error_fini(&error);
+
+    return numEntries;
 }
 
 // Easy getters for member variables
