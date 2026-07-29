@@ -430,12 +430,12 @@ void SearchEngine::createIndexFromKaggle() {
             // Setting up terminal progress bar for parsing
             // With thread safety to avoid race conditions
             while (true) {
-                int currentParsed = 0;
+                size_t currentParsed = 0;
 
                 // Mutex will be locked to read the size
                 {
                     std::lock_guard<std::mutex> lock(mapMutex);
-                    currentParsed = totalArticles;
+                    currentParsed = static_cast<size_t>(totalArticles);
                 }
 
                 if (currentParsed >= totalFilesToParse) {
