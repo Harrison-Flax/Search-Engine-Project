@@ -25,6 +25,23 @@ find_package(libzip REQUIRED)
 target_link_libraries(supersearch PRIVATE CURL::libcurl libzip::zip)
 target_link_libraries(Parser_Test PRIVATE CURL::libcurl libzip::zip)
 
+# For FTXUI Installation
+include(FetchContent)
+ 
+FetchContent_Declare(ftxui
+  GIT_REPOSITORY https://github.com/ArthurSonzogni/FTXUI
+  GIT_TAG v7.0.3 
+)
+ 
+FetchContent_MakeAvailable(ftxui)
+ 
+add_executable(main main.cpp)
+target_link_libraries(main
+  PRIVATE ftxui::screen
+  PRIVATE ftxui::dom
+  PRIVATE ftxui::component
+)
+
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
