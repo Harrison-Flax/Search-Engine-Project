@@ -1,5 +1,6 @@
 ## REVISION ##
-- This will be an improved version of my search engine group project which will have its own frontend with Qt and improved functions with greater functionality
+- This will be an improved version of my search engine group project which will have its own frontend with FTXUI and improved functions with greater functionality
+- Using FTXUI since this is a terminal based program (TUI)
 - I have not touched this since my sophomore year of college and I am looking at this to review C++ and to become a better SWE by reading and improving upon my code
 - Better and updated documentation will be included as well
 - Originally from SMU DSA class
