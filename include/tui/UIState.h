@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "include/SearchResult.h"
+#include "../SearchResult.h"
 
 struct UIState {
     std::string query;

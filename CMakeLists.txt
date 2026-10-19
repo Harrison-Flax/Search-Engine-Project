@@ -36,11 +36,21 @@ FetchContent_Declare(ftxui
 FetchContent_MakeAvailable(ftxui)
  
 add_executable(main src/main.cpp)
+target_include_directories(main PRIVATE include)
+target_sources(main PRIVATE src/tui/SearchPanel.cpp)
 target_link_libraries(main
   PRIVATE ftxui::screen
   PRIVATE ftxui::dom
   PRIVATE ftxui::component
 )
+
+add_executable(search_panel_demo
+    tests/search_panel_demo.cpp
+    src/tui/SearchPanel.cpp
+)
+target_include_directories(search_panel_demo PRIVATE include)
+target_link_libraries(search_panel_demo PRIVATE
+    ftxui::screen ftxui::dom ftxui::component)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
